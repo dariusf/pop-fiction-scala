@@ -1,0 +1,29 @@
+
+body {
+    text-align: center;
+    font-family: Arial;
+}
+
+#options {
+    margin: 0 auto; /* center div */
+    width: 80%;
+    text-align: left;
+    padding: 10px;
+}
+
+textarea {
+    font-size: 12px;
+    font-family:'Consolas', Courier, monospace;
+    width: 80%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #C6C6C6;
+}
+
+#input {
+    margin-top: 20px;
+}
+
+#js, #ast, #result {
+    background: #dadada;
+}

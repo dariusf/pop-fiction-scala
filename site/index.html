@@ -1,0 +1,93 @@
+
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript" src="lolli-fastopt.js"></script>
+
+        <script>
+            window.onload = function () {
+                Lollipop().main();
+
+                var $ = document.querySelectorAll.bind(document);
+
+                var inputField = $('#input')[0];
+                var initialField = $('#initial')[0];
+                var finalField = $('#final')[0];
+                var endingsField = $('#endings')[0];
+                // var astField = $('#ast')[0];
+
+                // var jsField = $('#js')[0];
+                // var resultField = $('#result')[0];
+
+                // var wrapWithFunctionCheckbox = $('#wrapWithFunctionCheckbox')[0];
+                // var useProxyCheckbox = $('#useProxyCheckbox')[0];
+                // var functionNameField = $('#functionNameField')[0];
+
+                // window.console.log = function () {
+                //     var args = Array.prototype.slice.call(arguments);
+                //     var message = args.join(' ');
+                //     if (resultField.value === "<no output>") {
+                //         resultField.value = message + "\n";
+                //     } else {
+                //         resultField.value += message + '\n';
+                //     }
+                // };
+
+                function update () {
+                    // resultField.value = "<no output>";
+                    try {
+                        // astField.value = Lollipop().parse(inputField.value).toString()
+                        endingsField.value = Lollipop().run(inputField.value, initialField.value, finalField.value);
+
+                        // jsField.value = iota.compile(inputField.value, {
+                        //     wrapWithFunction: wrapWithFunctionCheckbox.checked,
+                        //     useProxy: useProxyCheckbox.checked,
+                        //     functionName: functionNameField.value
+                        // });
+
+                        try {
+                            // var ioVal = eval(iota.compile(inputField.value));
+                            // var type = _io.getTypeOf(ioVal);
+                            // console.log('=>', _io.unwrapIoValue(ioVal), '(' + type + ')');
+                        } catch(e) {
+                            // resultField.value = e;
+                        }
+                    } catch (e) {
+                        // astField.value = e;
+                        // jsField.value = "";
+                        console.log('parse error');
+                    }
+                }
+
+                inputField.addEventListener("keyup", update);
+                initialField.addEventListener("keyup", update);
+                finalField.addEventListener("keyup", update);
+
+                inputField.value = "pig & straw -o straw_house.\npig & sticks -o stick_house.\npig & bricks -o brick_house.\nwolf & straw_house -o wolf.\nwolf & stick_house -o wolf.\nwolf & brick_house -o brick_house.\n";
+                initialField.value = "pig & pig & pig & straw & bricks & sticks & wolf";
+                finalField.value = "brick_house";
+
+                update();
+
+            };
+        </script>
+        <title>Demo</title>
+    </head>
+    <body>
+        <h1>Demo</h1>
+        <p>description goes here</p>
+        <textarea id="input" rows="10" cols="30" placeholder="Rules"></textarea>
+        <textarea id="initial" rows="1" cols="30" placeholder="Initial state"></textarea>
+        <textarea id="final" rows="1" cols="30" placeholder="Final state"></textarea>
+
+        <h2>Ways to reach goal</h2>
+        <textarea id="endings" readonly rows="20" cols="30" placeholder="No possible endings"></textarea>
+        <!-- <textarea id="ast" readonly rows="5" cols="30" placeholder="Parser Output"></textarea> -->
+        <!-- <br/> -->
+        <!-- <textarea id="js" readonly rows="10" cols="30" placeholder="Syntax Tree"></textarea> -->
+        <!-- <br/> -->
+        <!-- <textarea id="result" readonly rows="4" cols="30" placeholder="Result"></textarea> -->
+        <h6>Check out the project page here.</h6>
+    </body>
+</html>
