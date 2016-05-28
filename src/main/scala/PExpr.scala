@@ -39,6 +39,16 @@ abstract sealed class PExpr {
     this match {
       case PEmpty() => List(List(Empty()))
       case PTerm(v) => List(List(Term(v)))
+      case PVar(v) => List(List(Var(v)))
+      case PCompound(name, args) =>
+        List(List(Compound(name, args.map { a =>
+          val result = a.preprocess(withinImpl)
+          if (result.size != 1) {
+            throw new RuntimeException(s"invariant violated: $name has args $args")
+          } else {
+            result.head
+          }
+        })))
       case PAnd(l, r) => List(l.flatten(withinImpl) ++ r.flatten(withinImpl))
       case POr(l, r) =>
         if (withinImpl) {
@@ -64,6 +74,8 @@ abstract sealed class PExpr {
 
 case class PEmpty() extends PExpr
 case class PTerm(value: String) extends PExpr
+case class PVar(value: String) extends PExpr
+case class PCompound(value: String, args: List[PExpr]) extends PExpr
 case class PAnd(left: PExpr, right: PExpr) extends PExpr
 case class POr(left: PExpr, right: PExpr) extends PExpr
 case class PImplies(left: PExpr, right: PExpr) extends PExpr

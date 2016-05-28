@@ -13,7 +13,9 @@ abstract sealed class Expr {
   override def toString: String = {
     this match {
       case Term(v) => v
+      case Var(v) => v
       case Implies(l, r) => s"${andToString(l)} -o ${andToString(r)}"
+      case Compound(name, args) => s"$name ${args.map(_.toString).mkString(" ")}"
       case Empty() => s"<empty>"
     }
   }
@@ -24,6 +26,8 @@ package object Core {
 }
 
 case class Term(value: String) extends Expr
+case class Var(value: String) extends Expr
+case class Compound(value: String, args: List[Expr]) extends Expr
 case class Implies(left: List[Expr], right: List[Expr]) extends Expr {
   override def equals(o: Any) = o match {
     case that: Implies =>
