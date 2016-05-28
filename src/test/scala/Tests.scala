@@ -1,19 +1,45 @@
 
+import Core.Conj
 import fastparse.core.Parsed
 import org.scalatest._
 
 class Tests extends FlatSpec with Matchers {
 
-  "remove" should "work correctly" in {
-    def test(expr: Expr, toRemove: Expr): Expr =
-      Main.normalise(Main.remove(expr, toRemove))
-
-    test(Term("a"), Term("a")) should be (Empty())
-    test(And(List(Term("b"), Term("a"))), Term("a")) should be (And(List(Term("b"))))
-    test(And(List(Term("b"), Term("a"))), Term("b")) should be (And(List(Term("a"))))
+  "expression parser" should "munch maximally" in {
+    def test(input: String): PExpr = {
+      val Parsed.Success(result, _) = Parser.parseExpr(input)
+      result
+    }
+    test("house & car") should be (PAnd(PTerm("house"), PTerm("car")))
   }
 
-  "forward" should "work with terms" in {
+  "rules" should "be equal modulo ordering" in {
+    rules("a & b -o c & d.") should be (rules("b & a -o d & c."))
+  }
+
+  "preprocessing" should "work correctly" in {
+
+    def test(input: String): Conj = {
+      val Parsed.Success(expr, _) = Parser.parseExpr(input)
+      expr.preprocess(false)
+    }
+
+    test("a") should be (List(Term("a")))
+    test("a & b") should be (List(Term("a"), Term("b")))
+    test("a & b -o c") should be (List(
+      Implies(List(Term("a"), Term("b")), List(Term("c")))))
+    test("a | b -o c") should be (List(
+        Implies(List(Term("a")), List(Term("c"))),
+        Implies(List(Term("b")), List(Term("c")))))
+    test("a | b") should be (List(
+      Term("_1"),
+      Implies(List(Term("_1")), List(Term("a"))),
+      Implies(List(Term("_1")), List(Term("b"))),
+      Implies(List(Term("a")), List(Term("_1"))),
+      Implies(List(Term("b")), List(Term("_1")))))
+  }
+
+  "forward" should "work with transitive rules" in {
     test(
       """
         |b -o pig.
@@ -35,10 +61,23 @@ class Tests extends FlatSpec with Matchers {
       """.stripMargin,
       "a",
       "b | c"
-    ) should be (List(rules("a -o b.") ++ List(Implies(Term("b"), Term("_1")))))
+    ) should be (List(rules("a -o b.") ++ List(Implies(List(Term("b")), List(Term("_1"))))))
   }
 
-  "forward" should "work with &" in {
+  "conjunctions" should "not be affected by ordering" in {
+    test(
+      """
+        |a & b -o c & d.
+      """.stripMargin,
+      "b & a",
+      "d & c"
+    ) should be (List(rules(
+      """
+        |b & a -o d & c.
+      """.stripMargin)))
+  }
+
+  "forward" should "work with & on the left" in {
     test(
       """
         |a & b -o house.
@@ -49,47 +88,47 @@ class Tests extends FlatSpec with Matchers {
       """
         |a & b -o house.
       """.stripMargin)))
+  }
 
+  "forward" should "work with & on the right" in {
     test(
       """
-        |a & b -o house.
+        |a -o b & house.
       """.stripMargin,
-      "b & a",
-      "house"
+      "a",
+      "house & b"
     ) should be (List(rules(
       """
-        |a & b -o house.
+        |a -o b & house.
       """.stripMargin)))
   }
 
-//  "forward" should "work with rules with | on the left side" in {
-//    val rules = List(PImplies(POr(pig, b), house))
-//    Main.forward(rules, b, house, List()) should
-//      be (List(rules))
-//    Main.forward(rules, pig, house) should
-//      be (List(rules))
-//  }
-//
-//  "forward" should "work with rules with & on the left side" in {
-//    val rules = List(PImplies(PAnd(pig, b), house))
-//    Main.forward(rules, PAnd(pig, b), house, List()) should
-//      be (List(rules))
-//    Main.forward(rules, PAnd(b, pig), house) should
-//      be (List(rules))
-//  }
-//
-//  "forward" should "work with rules with & in the state" in {
-//    val rules = List(PImplies(pig, house))
-//    Main.forward(rules, PAnd(b, pig), PAnd(b, house), List()) should
-//      be (List(rules))
-//  }
-//
-//  "forward" should "backtrack correctly" in {
-//    val rules = List(PImplies(pig, b), PImplies(PAnd(pig, house), b))
-//    Main.forward(rules, PAnd(pig, house), b, List()) should
-//      be (List(List(PImplies(PAnd(pig, house), b))))
-//  }
-//
+  "forward" should "work with rules with | on the left side" in {
+
+    // These leak implementation details a bit...
+
+    test(
+      """
+        |a | b -o house.
+      """.stripMargin,
+      "a",
+      "house"
+    ) should be (List(rules(
+      """
+        |a -o house.
+      """.stripMargin)))
+
+    test(
+      """
+        |a | b -o house.
+      """.stripMargin,
+      "b",
+      "house"
+    ) should be (List(rules(
+      """
+        | b -o house.
+      """.stripMargin)))
+  }
 
   "three little pigs" should "work!" in {
     val r = """
@@ -108,21 +147,14 @@ class Tests extends FlatSpec with Matchers {
 
   def rules(input: String): List[Expr] = {
     val Parsed.Success(rules, _) = Parser.parseProgram(input)
-    rules.map(_.toExpr).toList
+    rules.flatMap(_.toExpr).toList
   }
 
-  def test(rules: String, initialState: String, finalState: String): List[List[Expr]] = {
+  def test(rules: String, initialState: String, finalState: String): List[Conj] = {
     val Parsed.Success(rules1, _) = Parser.parseProgram(rules)
     val Parsed.Success(state, _) = Parser.parseExpr(initialState)
     val Parsed.Success(goal, _) = Parser.parseExpr(finalState)
 
     Main.forward(rules1, state, goal)
   }
-
-//  it should "throw NoSuchElementException if an empty stack is popped" in {
-//    val emptyStack = new Stack[Int]
-//    a [NoSuchElementException] should be thrownBy {
-//      emptyStack.pop()
-//    }
-//  }
 }
