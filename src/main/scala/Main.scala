@@ -30,15 +30,16 @@ object Main {
 
   def reallyForward(rules: Conj, state: Conj, goal: Conj, appliedRules: List[Expr]): List[Conj] = {
 
-    println(spaces(mainDepth) + "forward state " + state + " | applied " + appliedRules.reverse)
+    println(s"${spaces(mainDepth)}forward state $state | applied ${appliedRules.reverse}")
     mainDepth = mainDepth + 1
 
     var result = List[List[Expr]]() // TODO remove
     if (state.groupBy(identity) == goal.groupBy(identity)) {
-      println("result! " + appliedRules.reverse)
+      println("result! ${appliedRules.reverse}")
       result = List(appliedRules.reverse)
     } else {
       val applicableRules = rules.filter(matchingRule(state, _))
+      println(s"${spaces(mainDepth)}applicable rules $applicableRules")
       result = applicableRules match {
         case _ :: _ =>
           applicableRules.flatMap {
@@ -73,7 +74,7 @@ object Main {
   }
 
   def attemptToUnify(ruleLHS: Conj, state: Conj): List[List[Sub]] = {
-    println(s"${spaces(mainDepth)} applying rule $ruleLHS")
+    println(s"${spaces(mainDepth)} applying rule with lhs $ruleLHS")
     println(s"${spaces(mainDepth)} to state $state")
     def aux(ruleLHS: List[Expr], state: Conj, soFar: List[Sub]): List[List[Sub]] = {
       auxDepth = auxDepth + 1
@@ -81,10 +82,17 @@ object Main {
       val result =
         ruleLHS match {
         case x :: xs =>
-          try {
-            val subss = everyItem(state).map{
-              case (s, newState) => (unify(x, s), newState)
+            val subss = everyItem(state).flatMap{
+              case (s, newState) =>
+                try {
+                 List((unify(x, s), newState))
+                } catch {
+                  case e: UnificationException =>
+//                    println(spaces(mainDepth + auxDepth) + e.getMessage)
+                    List()
+                }
             }
+            println(s"${spaces(mainDepth + auxDepth)}subss $subss")
             val result =
               subss.flatMap { case (subs, newState) =>
                 val newLHS = xs.map(apply(subs ++ soFar, _))
@@ -93,11 +101,6 @@ object Main {
               }
             println(s"${spaces(mainDepth + auxDepth)}result $result")
             result
-          } catch {
-            case e: UnificationException =>
-              println(spaces(mainDepth + auxDepth) + e.getMessage)
-              List()
-          }
         case _ => List(soFar)
       }
       auxDepth = auxDepth - 1

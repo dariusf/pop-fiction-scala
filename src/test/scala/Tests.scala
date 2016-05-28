@@ -158,6 +158,28 @@ class Tests extends FlatSpec with Matchers {
     ) should be (List(rules("eros A B & eros Witness A -o eros A B & eros B A & anger Witness A & anger Witness B.")))
   }
 
+  "forward" should "work with parametric rules" in {
+    val initialRules = """
+        |pig & material A -o house A.
+        |wolf & house straw -o wolf.
+        |wolf & house stick -o wolf.
+        |wolf & house brick -o house brick.
+      """.stripMargin
+    val finalRules =
+      """
+        |pig & material A -o house A.
+        |pig & material A -o house A.
+        |pig & material A -o house A.
+        |wolf & house straw -o wolf.
+        |wolf & house stick -o wolf.
+        |wolf & house brick -o house brick.
+      """.stripMargin
+    test(initialRules,
+      "pig & pig & pig & material straw & material brick & material stick & wolf",
+      "house brick").head should be
+        List(rules(finalRules))
+  }
+
   "whitespace" should "should be allowed everywhere" in {
     parseExpr(" a & V | c D ( e E ) f & ( b & d ) -o d ") should be (
       PImplies(
