@@ -182,6 +182,11 @@ class Tests extends FlatSpec with Matchers {
     rules.flatMap(_.toExpr).toList
   }
 
+  def parseProgram(input: String): List[PExpr] = {
+    val Parsed.Success(result, _) = Parser.parseProgram(input)
+    result.toList
+  }
+
   def parseExpr(input: String): PExpr = {
     val Parsed.Success(result, _) = Parser.parseExpr(input)
     result
