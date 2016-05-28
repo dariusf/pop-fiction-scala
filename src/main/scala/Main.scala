@@ -43,17 +43,22 @@ object Main {
         case _ :: _ =>
           applicableRules.flatMap {
             case r @ Implies(left, right) =>
-              // TODO stdlib method
-              val possibleRuleOrderings = permutations(left)
-              possibleRuleOrderings.flatMap { ordering =>
-                attemptToUnify(ordering, state).flatMap { subs =>
-                  if (subs.isEmpty) {
-                    List()
-                  } else {
-                    val additions = right.map(apply(subs, _))
-                    val subtractions = left.map(apply(subs, _))
-                    val newState = additions ++ state diff subtractions
-                    reallyForward(rules, newState, goal, r :: appliedRules)
+              if (freeVars(r).isEmpty) {
+                val newState = right ++ state diff left
+                reallyForward(rules, newState, goal, r :: appliedRules)
+              } else {
+                // TODO stdlib method
+                val possibleRuleOrderings = permutations(left)
+                possibleRuleOrderings.flatMap { ordering =>
+                  attemptToUnify(ordering, state).flatMap { subs =>
+                    if (subs.isEmpty) {
+                      List()
+                    } else {
+                      val additions = right.map(apply(subs, _))
+                      val subtractions = left.map(apply(subs, _))
+                      val newState = additions ++ state diff subtractions
+                      reallyForward(rules, newState, goal, r :: appliedRules)
+                    }
                   }
                 }
               }
@@ -133,7 +138,12 @@ object Main {
   def matchingRule(state: List[Expr], rule: Expr): Boolean = {
     rule match {
       case Implies(left, _) =>
-        left.forall(l => state.contains(l) || state.exists(s => unify(s, l).nonEmpty))
+        left.forall(l => state.contains(l) || state.exists(s =>
+          try {
+            unify(s, l).nonEmpty
+          } catch {
+            case e: UnificationException => false
+          }))
       case _ =>
         throw new RuntimeException(s"rules should contain only implications, and not $rule")
     }
