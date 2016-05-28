@@ -2,7 +2,8 @@ import Core.Conj
 
 object Main {
 
-  var depth = 0
+  var mainDepth = 0
+  var auxDepth = 0
   def spaces(n: Int): String = {
     n match {
       case 0 => ""
@@ -29,8 +30,8 @@ object Main {
 
   def reallyForward(rules: Conj, state: Conj, goal: Conj, appliedRules: List[Expr]): List[Conj] = {
 
-    println(spaces(depth) + "state " + state + " | applied " + appliedRules.reverse)
-    depth = depth + 1
+    println(spaces(mainDepth) + "forward state " + state + " | applied " + appliedRules.reverse)
+    mainDepth = mainDepth + 1
 
     var result = List[List[Expr]]() // TODO remove
     if (state.groupBy(identity) == goal.groupBy(identity)) {
@@ -43,7 +44,8 @@ object Main {
           applicableRules.flatMap {
             case r @ Implies(left, right) =>
               // TODO stdlib method
-              permutations(left).flatMap { ordering =>
+              val possibleRuleOrderings = permutations(left)
+              possibleRuleOrderings.flatMap { ordering =>
                 attemptToUnify(ordering, state).flatMap { subs =>
                   if (subs.isEmpty) {
                     List()
@@ -61,34 +63,44 @@ object Main {
         case _ => List()
       }
     }
-    depth = depth - 1
+    mainDepth = mainDepth - 1
     result
   }
 
   def attemptToUnify(ruleLHS: Conj, state: Conj): List[List[Sub]] = {
-//    println(s"state $state")
+    println(s"${spaces(mainDepth)} applying rule $ruleLHS")
+    println(s"${spaces(mainDepth)} to state $state")
     def aux(ruleLHS: List[Expr], state: Conj, soFar: List[Sub]): List[List[Sub]] = {
-//      println(s"aux $ruleLHS | $soFar")
-      ruleLHS match {
+      auxDepth = auxDepth + 1
+      println(s"${spaces(mainDepth + auxDepth)}aux $ruleLHS | $soFar")
+      val result =
+        ruleLHS match {
         case x :: xs =>
           try {
             val subss = everyItem(state).map{
               case (s, newState) => (unify(x, s), newState)
             }
-//            println(s"subss $subss")
+            val result =
               subss.flatMap { case (subs, newState) =>
                 val newLHS = xs.map(apply(subs ++ soFar, _))
+                println(s"${spaces(mainDepth + auxDepth)}continuing down the lhs $newLHS")
                 aux(newLHS, newState, subs ++ soFar)
               }
+            println(s"${spaces(mainDepth + auxDepth)}result $result")
+            result
           } catch {
             case e: UnificationException =>
-//              println(e.getMessage)
+              println(spaces(mainDepth + auxDepth) + e.getMessage)
               List()
           }
         case _ => List(soFar)
       }
+      auxDepth = auxDepth - 1
+      result
     }
-    aux(ruleLHS, state, List())
+    val result = aux(ruleLHS, state, List())
+    println(s"${spaces(mainDepth)}final aux result $result")
+    result
   }
 
   def main(args: Array[String]): Unit = {

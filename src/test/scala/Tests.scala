@@ -33,8 +33,7 @@ class Tests extends FlatSpec with Matchers {
   }
 
   "forward" should "work with transitive rules" in {
-    test(
-      """
+    test("""
         |b -o pig.
         |pig -o house.
       """.stripMargin,
@@ -150,6 +149,13 @@ class Tests extends FlatSpec with Matchers {
       "at a b & at b c",
       "at a c & at b c"
     ) should be (List(rules("at A B & at B C -o at B C & at A C.")))
+  }
+
+  "forward" should "work for... harder... examples" in {
+    test("eros A B & eros Witness A -o eros A B & eros B A & anger Witness A & anger Witness B.",
+      "eros desdemona cassio & eros othello desdemona",
+      "eros desdemona cassio & eros cassio desdemona & anger othello desdemona & anger othello cassio"
+    ) should be (List(rules("eros A B & eros Witness A -o eros A B & eros B A & anger Witness A & anger Witness B.")))
   }
 
   "whitespace" should "should be allowed everywhere" in {
