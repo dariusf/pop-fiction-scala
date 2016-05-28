@@ -50,7 +50,7 @@ object Parser {
   val parens: P[PExpr] = parenthesize(impl)
   val expr: P[PExpr] = space ~ impl ~ space
   val rule: P[PExpr] = P(impl ~ ".")
-  val prog: P[Seq[PExpr]] = space ~ rule.rep ~ space ~ End
+  val prog: P[Seq[PExpr]] = space ~ rule.rep(sep=space.?) ~ space ~ End
 
   case class NamedFunction[T, V](f: T => V, name: String) extends (T => V) {
     def apply(t: T) = f(t)
