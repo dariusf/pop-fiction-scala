@@ -205,6 +205,11 @@ class Tests extends FlatSpec with Matchers {
     parseExpr("A & car") should be (PAnd(PVar("A"), PTerm("car")))
   }
 
+  "expression parser" should "accept named rules (optionally)" in {
+    parseProgram("rule : house -o car.") should be (List(PImplies(PTerm("house"), PTerm("car"))))
+    parseProgram("house -o car.") should be (parseProgram("rule : house -o car."))
+  }
+
   def rules(input: String): List[Expr] = {
     val Parsed.Success(rules, _) = Parser.parseProgram(input)
     rules.flatMap(_.toExpr).toList

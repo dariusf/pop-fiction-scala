@@ -19,8 +19,8 @@ object Parser {
   val ident: P[String] = P(CharIn('a' to 'z') ~ (CharIn('a' to 'z') | "_").rep).!
   val varName: P[String] = P(CharIn('A' to 'Z') ~ (CharIn('a' to 'z') | "_").rep).!
 
-  val variable: P[PExpr] = varName.map(PVar(_))
-  val term: P[PExpr] = ident.map(PTerm(_))
+  val variable: P[PExpr] = varName.map(PVar)
+  val term: P[PExpr] = ident.map(PTerm)
   val compound: P[PExpr] = P(ident ~ space ~
     (variable | term | parenthesize(compound | term | variable)).rep (sep=space) ~ space).map {
     case (name, args) =>
@@ -49,7 +49,7 @@ object Parser {
     }
   val parens: P[PExpr] = parenthesize(impl)
   val expr: P[PExpr] = space ~ impl ~ space
-  val rule: P[PExpr] = P(impl ~ ".")
+  val rule: P[PExpr] = P((ident ~ space ~ ":" ~ space).? ~ impl ~ ".").map { case (_, r) => r }
   val prog: P[Seq[PExpr]] = space ~ rule.rep(sep=space.?) ~ space ~ End
 
   case class NamedFunction[T, V](f: T => V, name: String) extends (T => V) {
