@@ -16,8 +16,8 @@ object Parser {
     space ~ "(" ~ space ~/ p ~ space ~ ")" ~ space
 
   val space: P[Unit] = P(CharsWhile(NamedFunction(" \r\n".contains(_: Char), "Whitespace")).?)
-  val ident: P[String] = P(CharIn('a' to 'z') ~ (CharIn('a' to 'z') | "_").rep).!
-  val varName: P[String] = P(CharIn('A' to 'Z') ~ (CharIn('a' to 'z') | "_").rep).!
+  val ident: P[String] = P(CharIn('a' to 'z') ~ (CharIn('a' to 'z') | "_" | "'").rep).!
+  val varName: P[String] = P(CharIn('A' to 'Z') ~ (CharIn('a' to 'z') | "_" | "'").rep).!
 
   val variable: P[PExpr] = varName.map(PVar)
   val term: P[PExpr] = ident.map(PTerm)
@@ -31,7 +31,7 @@ object Parser {
       }
   }
   val grouped: P[PExpr] = P(compound | term | variable | parens)
-  val conj: P[PExpr] = P(grouped ~ (space ~ "&" ~ space ~/ grouped).rep)
+  val conj: P[PExpr] = P(grouped ~ (space ~ ("&" | ",") ~ space ~/ grouped).rep)
     .map { case (x, xs) =>
       xs.foldLeft(x){ case (left, right) => PAnd(left, right) }
     }
