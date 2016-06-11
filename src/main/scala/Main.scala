@@ -30,16 +30,16 @@ object Main {
 
   def reallyForward(rules: Conj, state: Conj, goal: Conj, appliedRules: List[Expr]): List[Conj] = {
 
-    println(s"${spaces(mainDepth)}forward state $state | applied ${appliedRules.reverse}")
+//    println(s"${spaces(mainDepth)}forward state $state | applied ${appliedRules.reverse}")
     mainDepth = mainDepth + 1
 
     var result = List[List[Expr]]() // TODO remove
     if (state.groupBy(identity) == goal.groupBy(identity)) {
-      println("result! ${appliedRules.reverse}")
+      println(s"result! ${appliedRules.reverse}")
       result = List(appliedRules.reverse)
     } else {
       val applicableRules = rules.filter(matchingRule(state, _))
-      println(s"${spaces(mainDepth)}applicable rules $applicableRules")
+//      println(s"${spaces(mainDepth)}applicable rules $applicableRules")
       result = applicableRules match {
         case _ :: _ =>
           applicableRules.flatMap {
@@ -74,11 +74,11 @@ object Main {
   }
 
   def attemptToUnify(ruleLHS: Conj, state: Conj): List[List[Sub]] = {
-    println(s"${spaces(mainDepth)} applying rule with lhs $ruleLHS")
-    println(s"${spaces(mainDepth)} to state $state")
+//    println(s"${spaces(mainDepth)} applying rule with lhs $ruleLHS")
+//    println(s"${spaces(mainDepth)} to state $state")
     def aux(ruleLHS: List[Expr], state: Conj, soFar: List[Sub]): List[List[Sub]] = {
       auxDepth = auxDepth + 1
-      println(s"${spaces(mainDepth + auxDepth)}aux $ruleLHS | $soFar")
+//      println(s"${spaces(mainDepth + auxDepth)}aux $ruleLHS | $soFar")
       val result =
         ruleLHS match {
         case x :: xs =>
@@ -92,14 +92,14 @@ object Main {
                     List()
                 }
             }
-            println(s"${spaces(mainDepth + auxDepth)}subss $subss")
+//            println(s"${spaces(mainDepth + auxDepth)}subss $subss")
             val result =
               subss.flatMap { case (subs, newState) =>
                 val newLHS = xs.map(apply(subs ++ soFar, _))
-                println(s"${spaces(mainDepth + auxDepth)}continuing down the lhs $newLHS")
+//                println(s"${spaces(mainDepth + auxDepth)}continuing down the lhs $newLHS")
                 aux(newLHS, newState, subs ++ soFar)
               }
-            println(s"${spaces(mainDepth + auxDepth)}result $result")
+//            println(s"${spaces(mainDepth + auxDepth)}result $result")
             result
         case _ => List(soFar)
       }
@@ -107,7 +107,7 @@ object Main {
       result
     }
     val result = aux(ruleLHS, state, List())
-    println(s"${spaces(mainDepth)}final aux result $result")
+//    println(s"${spaces(mainDepth)}final aux result $result")
     result
   }
 
