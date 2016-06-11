@@ -58,7 +58,7 @@ object Main {
                       val additions = right.map(apply(subs, _))
                       val subtractions = left.map(apply(subs, _))
                       val newState = additions ++ state diff subtractions
-                      reallyForward(rules, newState, goal, r :: appliedRules)
+                      reallyForward(rules, newState, goal, apply(subs, r) :: appliedRules)
                     }
                   }
                 }
