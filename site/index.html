@@ -6,6 +6,20 @@
         <script type="text/javascript" src="lolli-fastopt.js"></script>
 
         <script>
+
+            function debounce(fn, delay) {
+                var timer = null;
+                return function () {
+                    var context = this, args = arguments;
+                    clearTimeout(timer);
+                    timer = setTimeout(function () {
+                        fn.apply(context, args);
+                    }, delay);
+                };
+            }
+
+            window.console.log = function () {};
+
             window.onload = function () {
                 Lollipop().main();
 
@@ -60,9 +74,10 @@
                     }
                 }
 
-                inputField.addEventListener("keyup", update);
-                initialField.addEventListener("keyup", update);
-                finalField.addEventListener("keyup", update);
+                var cleverUpdate = debounce(update, 500);
+                inputField.addEventListener("keyup", cleverUpdate);
+                initialField.addEventListener("keyup", cleverUpdate);
+                finalField.addEventListener("keyup", cleverUpdate);
 
                 inputField.value = "pig & straw -o straw_house.\npig & sticks -o stick_house.\npig & bricks -o brick_house.\nwolf & straw_house -o wolf.\nwolf & stick_house -o wolf.\nwolf & brick_house -o brick_house.\n";
                 initialField.value = "pig & pig & pig & straw & bricks & sticks & wolf";
