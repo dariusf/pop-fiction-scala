@@ -22,19 +22,29 @@ object Main {
     }
   }
 
-  def forward(rules: Seq[PExpr], state: PExpr, goal: PExpr): List[Conj] = {
+  def runToGoal(rules: Seq[PExpr], state: PExpr, goal: PExpr): List[List[Expr]] = {
+    // We need this because OR in state/goals will be translated into more rules
     val (initialState, stateRules) = collectRules(state.toExpr)
     val (finalState, goalRules) = collectRules(goal.toExpr)
-    reallyForward(rules.flatMap(_.toExpr).toList ++ stateRules ++ goalRules, initialState, finalState, List[Expr]()).distinct
+    val allRules = rules.flatMap(_.toExpr).toList ++ stateRules ++ goalRules
+
+    run(allRules, initialState, finalState, { (state, goal) =>
+      state.groupBy(identity) == goal.groupBy(identity)
+    }, List()).distinct
   }
 
-  def reallyForward(rules: Conj, state: Conj, goal: Conj, appliedRules: List[Expr]): List[Conj] = {
+  def run(rules: Conj,
+          state: Conj,
+          goal: Conj,
+          endCondition: (Conj, Conj) => Boolean,
+          appliedRules: List[Expr]
+         ): List[List[Expr]] = {
 
 //    println(s"${spaces(mainDepth)}forward state $state | applied ${appliedRules.reverse}")
     mainDepth = mainDepth + 1
 
     var result = List[List[Expr]]() // TODO remove
-    if (state.groupBy(identity) == goal.groupBy(identity)) {
+    if (endCondition(state, goal)) {
       println(s"result! ${appliedRules.reverse}")
       result = List(appliedRules.reverse)
     } else {
@@ -46,7 +56,7 @@ object Main {
             case r @ Implies(left, right) =>
               if (freeVars(r).isEmpty) {
                 val newState = right ++ state diff left
-                reallyForward(rules, newState, goal, r :: appliedRules)
+                run(rules, newState, goal, endCondition, r :: appliedRules)
               } else {
                 // TODO stdlib method
                 val possibleRuleOrderings = permutations(left)
@@ -58,7 +68,7 @@ object Main {
                       val additions = right.map(apply(subs, _))
                       val subtractions = left.map(apply(subs, _))
                       val newState = additions ++ state diff subtractions
-                      reallyForward(rules, newState, goal, apply(subs, r) :: appliedRules)
+                      run(rules, newState, goal, endCondition, apply(subs, r) :: appliedRules)
                     }
                   }
                 }

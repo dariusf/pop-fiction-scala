@@ -18,7 +18,7 @@ object Lollipop extends JSApp {
     val Parsed.Success(state, _) = Parser.parseExpr(initialState)
     val Parsed.Success(goal, _) = Parser.parseExpr(finalState)
 
-    Main.prettyPrint(Main.forward(rules, state, goal))
+    Main.prettyPrint(Main.runToGoal(rules, state, goal))
   }
 
   def main(): Unit = {

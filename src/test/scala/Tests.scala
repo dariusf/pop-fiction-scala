@@ -141,21 +141,22 @@ class Tests extends FlatSpec with Matchers {
     test("A -o b.",
       "a",
       "b"
-    ) should be (List(rules("A -o b.")))
+    ) should be (List(rules("a -o b.")))
   }
 
   "forward" should "work for simple examples" in {
     test("at A B & at B C -o at B C & at A C.",
       "at a b & at b c",
       "at a c & at b c"
-    ) should be (List(rules("at A B & at B C -o at B C & at A C.")))
+    ) should be (List(rules("at a b & at b c -o at b c & at a c.")))
   }
 
   "forward" should "work for... harder... examples" in {
     test("eros A B & eros Witness A -o eros A B & eros B A & anger Witness A & anger Witness B.",
       "eros desdemona cassio & eros othello desdemona",
       "eros desdemona cassio & eros cassio desdemona & anger othello desdemona & anger othello cassio"
-    ) should be (List(rules("eros A B & eros Witness A -o eros A B & eros B A & anger Witness A & anger Witness B.")))
+    ) should be (List(rules("eros desdemona cassio & eros othello desdemona -o eros desdemona cassio & eros cassio " +
+      "desdemona & anger othello desdemona & anger othello cassio.")))
   }
 
   "forward" should "work with parametric rules" in {
@@ -240,6 +241,6 @@ class Tests extends FlatSpec with Matchers {
     val Parsed.Success(state, _) = Parser.parseExpr(initialState)
     val Parsed.Success(goal, _) = Parser.parseExpr(finalState)
 
-    Main.forward(rules1, state, goal)
+    Main.runToGoal(rules1, state, goal)
   }
 }
