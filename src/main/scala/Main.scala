@@ -22,6 +22,8 @@ object Main {
     }
   }
 
+  case class Result(rules: List[Expr], endState: Conj)
+
   def runToGoal(rules: Seq[PExpr], state: PExpr, goal: PExpr): List[List[Expr]] = {
     // We need this because OR in state/goals will be translated into more rules
     val (initialState, stateRules) = collectRules(state.toExpr)
@@ -30,7 +32,7 @@ object Main {
 
     run(allRules, initialState, finalState, { (state, goal) =>
       state.groupBy(identity) == goal.groupBy(identity)
-    }, List()).distinct
+    }, List()).map(_.rules).distinct
   }
 
   def run(rules: Conj,
@@ -38,15 +40,15 @@ object Main {
           goal: Conj,
           endCondition: (Conj, Conj) => Boolean,
           appliedRules: List[Expr]
-         ): List[List[Expr]] = {
+         ): List[Result] = {
 
 //    println(s"${spaces(mainDepth)}forward state $state | applied ${appliedRules.reverse}")
     mainDepth = mainDepth + 1
 
-    var result = List[List[Expr]]() // TODO remove
+    var result = List[Result]() // TODO remove
     if (endCondition(state, goal)) {
       println(s"result! ${appliedRules.reverse}")
-      result = List(appliedRules.reverse)
+      result = List(Result(appliedRules.reverse, state))
     } else {
       val applicableRules = rules.filter(matchingRule(state, _))
 //      println(s"${spaces(mainDepth)}applicable rules $applicableRules")
